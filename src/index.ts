@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import path from "node:path";
 import { Filter } from "bad-words"
 import {generateLocation, generateMessage} from "./utils/messages.js";
-import {addUser, getUser, getUsersInRoom, removeUser} from "./utils/users.js";
+import {addUser, getRooms, getUser, getUsersInRoom, removeUser} from "./utils/users.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -25,12 +25,14 @@ const message = "Welcome to ChatApp!";
 io.on('connection', (socket: Socket) => {
     console.log("New WebSocket Connection");
 
+    socket.emit('roomList', getRooms());
     socket.on('join', (options, callback) => {
         const { error, user } = addUser({ id: socket.id, ...options });
 
         if (error) return callback(error)
 
         socket.join(user!.room);
+        io.emit('roomList', getRooms());
 
         socket.emit('message', generateMessage("Admin", message));
         socket.broadcast.to(user!.room).emit('message', generateMessage("Admin", `${user!.username} has joined!`));
@@ -66,6 +68,7 @@ io.on('connection', (socket: Socket) => {
         const user = removeUser(socket.id);
 
         if (user) {
+            io.emit('roomList', getRooms());
             io.to(user.room).emit('message', generateMessage("Admin", `${user.username} left the chat`));
             io.to(user!.room).emit('roomData', {
                 room: user.username,

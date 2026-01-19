@@ -33,3 +33,9 @@ export const getUsersInRoom = (room: string) => {
     room = room.trim().toLowerCase();
     return users.filter((user) => user.room === room)
 }
+
+export const getRooms = () => {
+    const activeRooms = users.map((user) => user.room);
+    const uniqueRooms = [...new Set(activeRooms.reverse())]
+    return uniqueRooms.slice(0, 5);
+}
